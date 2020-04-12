@@ -14,8 +14,11 @@
 #    under the License.
 
 import six
+import certifi
 import urllib3
 
+from oslo_log import log as logging
+LOG = logging.getLogger(__name__)
 
 class ClosingProxyHttp(urllib3.ProxyManager):
     def __init__(self, proxy_url, disable_ssl_certificate_validation=False,
@@ -75,7 +78,12 @@ class ClosingHttp(urllib3.poolmanager.PoolManager):
             kwargs['cert_reqs'] = 'CERT_NONE'
         elif ca_certs:
             kwargs['cert_reqs'] = 'CERT_REQUIRED'
+
+        if ca_certs:
             kwargs['ca_certs'] = ca_certs
+        else:
+            LOG.warn("No ca_certs given - using certifi for default: %s" % certifi.where())
+            kwargs['ca_certs'] = certifi.where()
 
         if timeout:
             kwargs['timeout'] = timeout
